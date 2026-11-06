@@ -1,72 +1,384 @@
 
-package com.bwm.funcade.account;
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="BWM Funcade 계정 삭제 요청">
+<title>Funcade | 계정 삭제 요청</title>
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
-
-@RestController
-@RequestMapping("/api/v1/account-deletion")
-public class AccountDeletionController {
-
-    private final AccountDeletionService service;
-
-    public AccountDeletionController(
-            AccountDeletionService service) {
-        this.service = service;
-    }
-
-    public record VerificationRequest(
-            @NotBlank @Email String email,
-            @NotBlank String provider
-    ) {}
-
-    public record ConfirmRequest(
-            @NotBlank @Email String email,
-            @NotBlank String provider,
-            @NotBlank String code
-    ) {}
-
-    public record DeletionRequest(
-            @NotBlank String verificationToken,
-            @Size(max = 500) String reason
-    ) {}
-
-    @PostMapping("/verification")
-    public ResponseEntity<Void> sendVerification(
-            @Valid @RequestBody VerificationRequest request) {
-
-        service.sendVerification(
-                request.email(), request.provider());
-
-        return ResponseEntity.accepted().build();
-    }
-
-    @PostMapping("/verification/confirm")
-    public Map<String, String> confirmVerification(
-            @Valid @RequestBody ConfirmRequest request) {
-
-        String token = service.confirmVerification(
-                request.email(),
-                request.provider(),
-                request.code());
-
-        return Map.of("verificationToken", token);
-    }
-
-    @PostMapping("/requests")
-    public Map<String, String> createRequest(
-            @Valid @RequestBody DeletionRequest request) {
-
-        String requestId = service.createRequest(
-                request.verificationToken(),
-                request.reason());
-
-        return Map.of("requestId", requestId);
-    }
+<style>
+:root {
+  font-family: -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  color: #253044;
+  background: #f5f7fb;
 }
+* { box-sizing: border-box; }
+body { margin: 0; line-height: 1.7; }
+
+header {
+  background: #fff;
+  border-bottom: 1px solid #e2e6ee;
+  padding: 22px 20px;
+}
+header .inner, main, footer {
+  max-width: 760px;
+  margin: auto;
+}
+.brand { font-weight: 800; font-size: 21px; }
+.brand span { color: #64748b; font-weight: 400; }
+
+main { padding: 40px 20px 60px; }
+h1 { font-size: 30px; margin: 0 0 10px; }
+h2 { font-size: 19px; margin-top: 0; }
+.subtitle { color: #64748b; margin-bottom: 30px; }
+
+.card {
+  background: #fff;
+  border: 1px solid #e2e6ee;
+  border-radius: 15px;
+  padding: 28px;
+  margin-bottom: 20px;
+}
+label {
+  display: block;
+  font-weight: 600;
+  margin: 18px 0 7px;
+}
+input, select, textarea {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+}
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid #64748b;
+}
+button {
+  background: #253044;
+  color: white;
+  border: 0;
+  border-radius: 9px;
+  padding: 14px 20px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+button:disabled { opacity: .5; cursor: not-allowed; }
+.full { width: 100%; margin-top: 18px; }
+
+.inline {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.inline input { flex: 1; min-width: 0; }
+.inline button { white-space: nowrap; }
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-weight: 400;
+}
+.check input { width: auto; margin-top: 7px; }
+
+.note {
+  background: #f1f5f9;
+  padding: 16px;
+  border-radius: 9px;
+  font-size: 14px;
+}
+#status { margin-top: 15px; white-space: pre-wrap; }
+.error { color: #b91c1c; }
+.success { color: #166534; }
+
+footer {
+  padding: 20px;
+  color: #64748b;
+  font-size: 13px;
+  text-align: center;
+}
+a { color: #334e86; }
+
+@media(max-width: 600px) {
+  main { padding: 25px 15px; }
+  .card { padding: 20px; }
+  h1 { font-size: 25px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="inner">
+    <div class="brand">Funcade <span>by BWM</span></div>
+  </div>
+</header>
+
+<main>
+  <h1>계정 삭제 요청</h1>
+  <p class="subtitle">
+    Funcade 계정 및 관련 데이터의 삭제를 요청할 수 있습니다.
+  </p>
+
+  <section class="card">
+    <h2>계정 삭제 안내</h2>
+    <p>
+      Funcade 회원은 앱 내 설정에서 회원 탈퇴를
+      신청할 수 있습니다.
+      앱에 접근하기 어려운 경우 아래 웹 양식을 이용해
+      계정 삭제를 요청할 수 있습니다.
+    </p>
+    <div class="note">
+      삭제 요청 접수 후 본인 확인과 처리 절차를 거칩니다.
+      요청 제출만으로 계정이 즉시 삭제되는 것은 아닙니다.
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>계정 삭제 요청서</h2>
+
+    <form id="deleteForm">
+
+      <label for="email">계정 이메일</label>
+      <input id="email" type="email"
+        autocomplete="email"
+        placeholder="가입 시 사용한 이메일" required>
+
+      <label for="provider">로그인 방식</label>
+      <select id="provider" required>
+        <option value="">선택해 주세요</option>
+        <option value="APPLE">Apple 로그인</option>
+        <option value="GOOGLE">Google 로그인</option>
+        <option value="GUEST">게스트 계정</option>
+      </select>
+
+      <label for="reason">삭제 사유 (선택)</label>
+      <textarea id="reason" rows="3"
+        maxlength="500"
+        placeholder="삭제 사유를 입력해 주세요"></textarea>
+
+      <button type="button" id="sendCode" class="full">
+        이메일 인증번호 발송
+      </button>
+
+      <label for="code">이메일 인증번호</label>
+      <div class="inline">
+        <input id="code" type="text"
+          inputmode="numeric" maxlength="8"
+          autocomplete="one-time-code"
+          placeholder="인증번호">
+        <button type="button" id="verifyCode">인증</button>
+      </div>
+
+      <label class="check">
+        <input type="checkbox" id="consent" required>
+        <span>
+          계정 삭제 시 게임 기록, 포인트 및
+          관련 데이터가 삭제될 수 있으며,
+          법령에 따라 일부 정보는 별도로 보관될 수
+          있음을 확인했습니다.
+        </span>
+      </label>
+
+      <button type="submit" id="submitBtn"
+        class="full" disabled>
+        계정 삭제 요청 제출
+      </button>
+
+      <p id="status" role="status" aria-live="polite"></p>
+
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>삭제되는 데이터</h2>
+    <p>
+      본인 확인과 삭제 절차가 완료되면 회원 계정,
+      게임 진행 기록, 포인트 및 등급 정보,
+      추천인 관계 등 계정에 연결된 데이터를
+      삭제하거나 관련 법령에 따라 처리합니다.
+    </p>
+    <p>
+      결제·환불 기록 등 법령상 보관 의무가 있는
+      정보는 정해진 기간 동안 별도로 보관할 수 있습니다.
+    </p>
+    <p>
+      탈퇴 처리 후에는 Funcade 운영 정책에 따라
+      24시간 동안 재가입이 제한될 수 있습니다.
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>관련 문서</h2>
+    <p><a href="./privacy.html">개인정보 처리방침</a></p>
+    <p><a href="./terms.html">서비스 이용약관</a></p>
+  </section>
+</main>
+
+<footer>
+  © 2026 BWM. Funcade. All rights reserved.
+</footer>
+
+<script>
+"use strict";
+
+// 실제 Spring Boot API 주소로 변경
+const API_BASE_URL = "";
+
+const $ = id => document.getElementById(id);
+const configured = /^https:\/\/[^/]+/.test(API_BASE_URL);
+
+let verified = false;
+let verificationToken = "";
+
+function status(message, error = false) {
+  $("status").textContent = message;
+  $("status").className = error ? "error" : "success";
+}
+
+function resetVerification() {
+  verified = false;
+  verificationToken = "";
+  $("submitBtn").disabled = true;
+}
+
+async function api(path, body) {
+  const response = await fetch(API_BASE_URL + path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  let result = {};
+  try {
+    result = await response.json();
+  } catch (_) {}
+
+  if (!response.ok) {
+    throw new Error(
+      result.message || "요청 처리에 실패했습니다."
+    );
+  }
+  return result;
+}
+
+$("email").addEventListener("input", resetVerification);
+$("provider").addEventListener("change", resetVerification);
+
+$("sendCode").addEventListener("click", async () => {
+  if (!configured) return;
+
+  const email = $("email").value.trim();
+  const provider = $("provider").value;
+
+  if (!email || !$("email").checkValidity() || !provider) {
+    return status(
+      "이메일과 로그인 방식을 확인해 주세요.", true
+    );
+  }
+
+  try {
+    $("sendCode").disabled = true;
+
+    await api("/api/v1/account-deletion/verification", {
+      email, provider
+    });
+
+    status(
+      "인증 요청이 접수되었습니다. 이메일을 확인해 주세요."
+    );
+  } catch (e) {
+    status(e.message, true);
+  } finally {
+    $("sendCode").disabled = false;
+  }
+});
+
+$("verifyCode").addEventListener("click", async () => {
+  if (!configured) return;
+
+  try {
+    const result = await api(
+      "/api/v1/account-deletion/verification/confirm",
+      {
+        email: $("email").value.trim(),
+        provider: $("provider").value,
+        code: $("code").value.trim()
+      }
+    );
+
+    if (!result.verificationToken) {
+      throw new Error(
+        "인증 결과를 확인할 수 없습니다."
+      );
+    }
+
+    verificationToken = result.verificationToken;
+    verified = true;
+    $("submitBtn").disabled = false;
+
+    status("이메일 인증이 완료되었습니다.");
+  } catch (e) {
+    resetVerification();
+    status(e.message, true);
+  }
+});
+
+$("deleteForm").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  if (!configured || !verified || !$("consent").checked) {
+    return;
+  }
+
+  if (!confirm("계정 삭제를 요청하시겠습니까?")) {
+    return;
+  }
+
+  $("submitBtn").disabled = true;
+
+  try {
+    const result = await api(
+      "/api/v1/account-deletion/requests",
+      {
+        verificationToken,
+        reason: $("reason").value.trim()
+      }
+    );
+
+    status(
+      "계정 삭제 요청이 접수되었습니다." +
+      (result.requestId
+        ? "\n접수번호: " + result.requestId
+        : "")
+    );
+
+    verified = false;
+    verificationToken = "";
+
+  } catch (e) {
+    $("submitBtn").disabled = false;
+    status(e.message, true);
+  }
+});
+
+if (!configured) {
+  $("sendCode").disabled = true;
+  $("verifyCode").disabled = true;
+
+  status(
+    "현재 계정 삭제 요청 서버를 준비 중입니다. " +
+    "서버 연결 후 이용할 수 있습니다.",
+    true
+  );
+}
+</script>
+
+</body>
+</html>
